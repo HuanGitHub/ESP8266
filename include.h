@@ -1,0 +1,13 @@
+#include "ets_sys.h"
+#include "osapi.h"
+#include "uart.h"
+//#include "../driver/hw_timer.c"
+#include "user_interface.h"
+#include "gpio.h"
+#include "eagle_soc.h"
+#include "espconn.h"
+#include "ip_addr.h"
+#include "c_types.h"
+#include "mem.h"
+#include "IO.h"
+void espconn_tcp_client_connect();
