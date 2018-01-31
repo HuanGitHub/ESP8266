@@ -1,4 +1,4 @@
-.output/eagle/debug/obj/wifi.o .output/eagle/debug/obj/wifi.d : wifi.c include.h ../../include/ets_sys.h ../../include/c_types.h \
+.output/eagle/debug/obj/WIFI.o .output/eagle/debug/obj/WIFI.d : WIFI.c include.h ../../include/ets_sys.h ../../include/c_types.h \
  ../../include/eagle_soc.h ../../include/osapi.h \
  /opt/xtensa-lx106-elf/lib/gcc/xtensa-lx106-elf/4.8.2/include/string.h \
  /opt/xtensa-lx106-elf/lib/gcc/xtensa-lx106-elf/4.8.2/include/_ansi.h \
@@ -16,4 +16,4 @@
  ../../include/ets_sys.h ../../include/ip_addr.h ../../include/queue.h \
  ../../include/spi_flash.h ../../include/gpio.h ../../include/gpio.h \
  ../../include/espconn.h ../../include/ip_addr.h ../../include/mem.h IO.h \
- wifi.h
+ wifi.h TCP_server.h TCP_client.h

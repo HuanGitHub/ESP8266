@@ -15,4 +15,5 @@
  ../../include/user_interface.h ../../include/os_type.h \
  ../../include/ets_sys.h ../../include/ip_addr.h ../../include/queue.h \
  ../../include/spi_flash.h ../../include/gpio.h ../../include/gpio.h \
- ../../include/espconn.h ../../include/ip_addr.h ../../include/mem.h
+ ../../include/espconn.h ../../include/ip_addr.h ../../include/mem.h \
+ wifi.h TCP_server.h TCP_client.h

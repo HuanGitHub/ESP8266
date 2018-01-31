@@ -1,7 +1,4 @@
 #include "include.h"
-#include "wifi.h"
-#include "TCP_server.h"
-#include "TCP_client.h"
 uint32 ICACHE_FLASH_ATTR
 user_rf_cal_sector_set(void)
 {/*{{{*/
@@ -54,10 +51,18 @@ void espconn_cli_timer()
 	}
 }/*}}}*/
 void espconn_tcp_opser_timer() 
-{/*{{{*/
+ {/*{{{*/
 		os_timer_disarm(&ser_timer);
 		os_timer_setfn(&ser_timer,espconn_tcp_server_creat,NULL);
 		os_timer_arm(&ser_timer,1500,0);
+	
+}/*}}}*/
+void espconn_ESP_tcp_opser_timer() 
+ {/*{{{*/
+		wifi_esp_softap_config();
+		os_timer_disarm(&ESP_ser_timer);
+		os_timer_setfn(&ESP_ser_timer,espconn_ESP_tcp_server_creat,NULL);
+		os_timer_arm(&ESP_ser_timer,1500,0);
 	
 }/*}}}*/
 void espconn_tcp_opcli_timer()
@@ -70,10 +75,9 @@ void ICACHE_FLASH_ATTR
 user_init(void)
 {	
 		uart_init(BIT_RATE_115200,BIT_RATE_115200);
-		wifi_set_station_config("D402","402gk402");		
-	
-	//	wifi_set_station_config("iPhone","123456789");		
-		espconn_tcp_opcli_timer();
-		espconn_tcp_opser_timer();
-	//	Open_len();
-}
+		espconn_ESP_tcp_opser_timer();
+//		wifi_set_station_config("601335832","112233445566");	
+		//	espconn_tcp_opcli_timer()..;
+//		espconn_tcp_opser_timer();
+	//	Init_led();
+}		 

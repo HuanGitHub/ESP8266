@@ -1,3 +1,4 @@
+#define _INCLUDE_
 #include "ets_sys.h"
 #include "osapi.h"
 #include "uart.h"
@@ -10,4 +11,6 @@
 #include "c_types.h"
 #include "mem.h"
 #include "IO.h"
-void espconn_tcp_client_connect();
+#include "wifi.h"
+#include "TCP_server.h"
+#include "TCP_client.h"
