@@ -14,7 +14,8 @@ typedef struct{
 	char ssid[20];
 	char pass[20];	
 }WIFI_Set;
-int get_Post_Par(char *buf,WIFI_Set* WIFI_Config);
+WIFI_Set s_WIFI_Info;
+int get_Post_Par(char *buf);
 void espconn_ESP_tcp_server_creat();
 void Led_CRL(char *buf);
 void espconn_ESP_server_recv_cb(void *arg,char *pdata,unsigned short len);

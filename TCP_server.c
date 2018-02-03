@@ -20,17 +20,11 @@ first name:\r\n\
 </html>";
 void espconn_ESP_server_recv_cb(void *arg,char *pdata,unsigned short len)
 {/*{{{*/ 
-	WIFI_Set *WIFI_Info;
-//	char *data=(char *)os_zalloc(len+1);
-	WIFI_Info = (WIFI_Set *)os_zalloc(sizeof(WIFI_Set));
-//	os_memcpy(data,pdata,len+1);
-	os_printf("%s\n",pdata);
-//	strncpy(data , "test" ,4);
-   	espconn_send(ESP_tcp_ser,http_res,strlen(http_res));
-//	os_printf("%s\r\n",data);
-	get_Post_Par(pdata,WIFI_Info);
-//	os_printf("WIFI ssid:%s\r\n WIFI pass:%s\r\n",WIFI_Info->ssid,WIFI_Info->pass);
- //   os_free(data);	
+	if(pdata != NULL){
+   		espconn_send(ESP_tcp_ser,http_res,strlen(http_res));
+		os_printf("%s\n",pdata);
+		get_Post_Par(pdata);		
+	}
 }/*}}}*/
 void espconn_server_recv_cb(void *arg,char *pdata,unsigned short len)
 {/*{{{*/ 
@@ -75,31 +69,38 @@ void espconn_tcp_server_creat()
 		os_timer_arm(&ser_timer,1500,0);
 	}
 }/*}}}*/
-int get_Post_Par(char *buf, WIFI_Set* WIFI_Config)
+int get_Post_Par(char *buf)
 {/*{{{*/
 	char *beg;
-//	WIFI_Set *WIFI_Config = (WIFI_Set*)os_zalloc(sizeof(WIFI_Set));
 	char *end;
 	char *tmp;
 	int len;
 	if(buf != NULL){
 		beg = strstr(buf,"\r\n\r\n");
+		beg += 4;
 		end = strstr(beg,"=");
-		end += 1;
-		tmp = strstr(beg , "&");
-		os_printf("%s\r\n",beg);
-		len = tmp -end;
-	//	os_memcpy(WIFI_Config->ssid,end,len);
-		strncpy(WIFI_Config->ssid,"601335832",9);
-		end += len;	
-		beg = strstr(end , "=");
+		if(end == NULL){
+				os_printf("NOT find");
+				return 0;
+		}
+		else{
+				end += 1;
+				tmp = strstr(beg ,"&");
+				if(tmp != NULL)
+				{
+					len = tmp - end ;
+				}		
+		}
+		if(len != 1)
+			os_printf("ssid len: %d\r\n",len);
+		strncpy(s_WIFI_Info.ssid, end, len);	
+		beg = strstr(end ,"=");
+		if(beg == NULL)
+				return 0;
 		beg += 1;
-		len = beg -end;
-		end +=len;
-	//	os_memcpy(WIFI_Config->pass,end,os_strlen(end));
-		os_printf("WIFI SSID: %s\r\n WIFI PASS %s\r\n",WIFI_Config->ssid,WIFI_Config->pass);
+		strcpy(s_WIFI_Info.pass,beg);
+		os_printf("end: %s\r\n WIFI_Info.ssid: %s\r\nWIFI_Info.pass %s\r\n",end,s_WIFI_Info.ssid,s_WIFI_Info.pass);
 		return 1;	
-		
 	}
 
 }/*}}}*/
