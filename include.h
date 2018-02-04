@@ -1,4 +1,6 @@
-#define _INCLUDE_
+#ifndef __INCLUDE_H
+#define __INCLUDE_H
+
 #include "ets_sys.h"
 #include "osapi.h"
 #include "uart.h"
@@ -14,3 +16,7 @@
 #include "wifi.h"
 #include "TCP_server.h"
 #include "TCP_client.h"
+void use_Timer(os_timer_t *timer,os_timer_func_t *pfunction,void *parg,int t,char re_falg);
+#endif
+
+

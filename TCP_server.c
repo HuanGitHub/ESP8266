@@ -11,19 +11,30 @@ char *http_res = "HTTP/1.1 200 OK\r\nServer:zhanghuan\r\n"
 </head>\r\n\
 <body>\r\n\
 <form action = \"\" method = \"post\">\r\n\
-first name:\r\n\
+WIFI name:\r\n\
 <input type = \"text\" name = \"ssid\">\r\n\
+WIFI pass\r\n\
 <input type = \"text\" name = \"pass\">\r\n\
 <input type = \"submit\" value = \"Submit\">\r\n\
 </form>\r\n\
 </body>\r\n\
 </html>";
+char get_WIFI_Set_Flag;
+WIFI_Set s_WIFI_Info;
 void espconn_ESP_server_recv_cb(void *arg,char *pdata,unsigned short len)
 {/*{{{*/ 
 	if(pdata != NULL){
    		espconn_send(ESP_tcp_ser,http_res,strlen(http_res));
 		os_printf("%s\n",pdata);
-		get_Post_Par(pdata);		
+		get_WIFI_Set_Flag = get_Post_Par(pdata);		
+		os_printf("get_WIFI_Set_flag: %d\r\n",get_WIFI_Set_Flag);
+	//	get_st_WIFI_Config();
+
+//	if(strlen(s_WIFI_Info.ssid)>0 && strcmp(s_WIFI_Info.ssid,stationconf.ssid))
+	{
+		os_printf("Have new WIFI ssid");
+//		wifi_set_station_config(s_WIFI_Info.ssid,s_WIFI_Info.pass);
+	}
 	}
 }/*}}}*/
 void espconn_server_recv_cb(void *arg,char *pdata,unsigned short len)
@@ -40,7 +51,7 @@ void espconn_server_cb(void *arg)
 	os_printf("Have client connect\n");
 }/*}}}*/
 void espconn_tcp_server_creat()
- {/*{{{*/
+ {/*{{{*/ 
 	os_timer_disarm(&ser_timer);
 	info=(struct ip_info *)os_zalloc(sizeof(struct ip_info));
 //	uint8 localip[4]={192,168,120,109};
@@ -68,6 +79,7 @@ void espconn_tcp_server_creat()
 		os_timer_setfn(&ser_timer,espconn_tcp_server_creat,NULL);
 		os_timer_arm(&ser_timer,1500,0);
 	}
+	os_free(info);
 }/*}}}*/
 int get_Post_Par(char *buf)
 {/*{{{*/
@@ -75,6 +87,7 @@ int get_Post_Par(char *buf)
 	char *end;
 	char *tmp;
 	int len;
+
 	if(buf != NULL){
 		beg = strstr(buf,"\r\n\r\n");
 		beg += 4;
@@ -94,6 +107,7 @@ int get_Post_Par(char *buf)
 		if(len != 1)
 			os_printf("ssid len: %d\r\n",len);
 		strncpy(s_WIFI_Info.ssid, end, len);	
+		s_WIFI_Info.ssid[len+1] = '\0';
 		beg = strstr(end ,"=");
 		if(beg == NULL)
 				return 0;
@@ -184,10 +198,11 @@ void Led_CRL(char *buf)
 }/*}}}*/
 void espconn_ESP_tcp_server_creat()
  {/*{{{*/
-	os_timer_disarm(&ESP_ser_timer);
+	os_timer_disarm(&T_ESP_ser_timer);
 	info=(struct ip_info *)os_zalloc(sizeof(struct ip_info));
 	wifi_get_ip_info(SOFTAP_IF,info);
 
+	os_printf("Begin Create ESP_TCP_Server");
 	if((info->ip.addr)!=0)
 	{
 		os_printf("Get ip successful ip:%u\n",info->ip);
@@ -207,7 +222,6 @@ void espconn_ESP_tcp_server_creat()
 		}
 	}else{
 		os_printf("Fail to listen!!\n");
-		os_timer_setfn(&ESP_ser_timer,espconn_tcp_server_creat,NULL);
-		os_timer_arm(&ESP_ser_timer,1500,0);
+		use_Timer(&T_ESP_ser_timer,espconn_ESP_tcp_server_creat,NULL,2000,0);
 	}
 }/*}}}*/

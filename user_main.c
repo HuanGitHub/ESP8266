@@ -1,4 +1,12 @@
 #include "include.h"
+
+typedef struct{
+	int k;
+	int o;
+	char p;
+}st;
+st tt;
+extern WIFI_Set s_WIFI_Info;
 uint32 ICACHE_FLASH_ATTR
 user_rf_cal_sector_set(void)
 {/*{{{*/
@@ -58,13 +66,28 @@ void espconn_tcp_opser_timer()
 	
 }/*}}}*/
 void espconn_ESP_tcp_opser_timer() 
- {/*{{{*/
-		wifi_esp_softap_config();
-		os_timer_disarm(&ESP_ser_timer);
-		os_timer_setfn(&ESP_ser_timer,espconn_ESP_tcp_server_creat,NULL);
-		os_timer_arm(&ESP_ser_timer,1500,0);
+{/*{{{*/
+	wifi_set_opmode_current(0x02);	
+		os_timer_disarm(&T_ESP_ser_timer);
+		os_timer_setfn(&T_ESP_ser_timer,espconn_ESP_tcp_server_creat,NULL);
+		os_timer_arm(&T_ESP_ser_timer,1500,0);
 	
 }/*}}}*/
+void use_Timer(os_timer_t *timer,os_timer_func_t *pfunction,void *parg,int t,char re_falg)
+{/*{{{*/
+	os_timer_disarm(timer);
+	os_timer_setfn(timer,pfunction,parg);
+	os_timer_arm(timer,t,re_falg);
+}/*}}}*/
+void os_init()
+{
+	wifi_set_opmode_current(0x02);	
+ 	os_memset(s_WIFI_Info,0,sizeof(WIFI_Set));
+	os_memset(tt,0,sizeof(st)); //?
+	WIFI_Flash_Flag = 0;
+	os_printf("OS_INIT over");
+	
+}
 void espconn_tcp_opcli_timer()
 {/*{{{*/
 		os_timer_disarm(&cli_timer);
@@ -75,9 +98,10 @@ void ICACHE_FLASH_ATTR
 user_init(void)
 {	
 		uart_init(BIT_RATE_115200,BIT_RATE_115200);
-		espconn_ESP_tcp_opser_timer();
+		os_init();
+		Auto_Connect_WIFI();
+		use_Timer(&T_get_WIFI,get_WIFI_state,NULL,2000,1);
+		use_Timer(&T_ESP_ser_timer,espconn_ESP_tcp_server_creat,NULL,2000,0);
 //		wifi_set_station_config("601335832","112233445566");	
-		//	espconn_tcp_opcli_timer()..;
-//		espconn_tcp_opser_timer();
 	//	Init_led();
 }		 

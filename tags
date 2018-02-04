@@ -4,10 +4,12 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+Auto_Connect_WIFI	WIFI.c	/^void Auto_Connect_WIFI()$/;"	f
 Bit12	IO.h	/^char Bit12,Bit13,Bit14;$/;"	v
 Bit13	IO.h	/^char Bit12,Bit13,Bit14;$/;"	v
 Bit14	IO.h	/^char Bit12,Bit13,Bit14;$/;"	v
 Close_led	IO.c	/^int Close_led()$/;"	f
+ESP_tcp_ser	TCP_server.h	/^struct espconn *ESP_tcp_ser;$/;"	v	typeref:struct:espconn
 GEN_LIBS	Makefile	/^GEN_LIBS = libuser.a$/;"	m
 GPIO_12_No	IO.c	/^void GPIO_12_No()$/;"	f
 GPIO_12_Off	IO.c	/^void GPIO_12_Off()$/;"	f
@@ -18,15 +20,24 @@ GPIO_14_Off	IO.c	/^void GPIO_14_Off()$/;"	f
 INCLUDES	Makefile	/^INCLUDES := $(INCLUDES) -I $(PDIR)include$/;"	m
 IP	TCP_client.h	2;"	d
 Init_led	IO.c	/^void Init_led()$/;"	f
+Led_CRL	TCP_server.c	/^void Led_CRL(char *buf)$/;"	f
 Open_led	IO.c	/^int Open_led()$/;"	f
 PDIR	Makefile	/^PDIR := ..\/$(PDIR)$/;"	m
 Port	TCP_client.h	1;"	d
-Ser_IP	TCP_server.h	2;"	d
-Ser_Port	TCP_server.h	1;"	d
+Ser_Port	TCP_server.h	3;"	d
+T_ESP_ser_timer	TCP_server.h	/^LOCAL os_timer_t T_ESP_ser_timer;$/;"	v
+T_get_WIFI	WIFI.h	/^LOCAL os_timer_t T_get_WIFI;$/;"	v
 Time_led	IO.c	/^os_timer_t Time_led;$/;"	v
-_INCLUDE_	include.h	1;"	d
+WIFI_Set	TCP_server.h	/^}WIFI_Set;$/;"	t	typeref:struct:__anon1
+WIFI_connect_Flag	WIFI.h	/^char WIFI_connect_Flag;$/;"	v
+__INCLUDE_H	include.h	2;"	d
 __IO_H	IO.h	2;"	d
+__TCP_SERVER_H	TCP_server.h	2;"	d
+__WIFI_H	WIFI.h	2;"	d
 cli_timer	TCP_client.h	/^LOCAL os_timer_t cli_timer;$/;"	v
+espconn_ESP_server_recv_cb	TCP_server.c	/^void espconn_ESP_server_recv_cb(void *arg,char *pdata,unsigned short len)$/;"	f
+espconn_ESP_tcp_opser_timer	user_main.c	/^void espconn_ESP_tcp_opser_timer() $/;"	f
+espconn_ESP_tcp_server_creat	TCP_server.c	/^void espconn_ESP_tcp_server_creat()$/;"	f
 espconn_cli_timer	user_main.c	/^void espconn_cli_timer()$/;"	f
 espconn_client_recv_cb	TCP_client.c	/^void espconn_client_recv_cb(void *arg,char *pdata,unsigned short len)$/;"	f
 espconn_connect_cb	TCP_client.c	/^void espconn_connect_cb(void *arg)$/;"	f
@@ -39,14 +50,29 @@ espconn_tcp_opcli_timer	user_main.c	/^void espconn_tcp_opcli_timer()$/;"	f
 espconn_tcp_opser_timer	user_main.c	/^void espconn_tcp_opser_timer() $/;"	f
 espconn_tcp_server_creat	TCP_server.c	/^void espconn_tcp_server_creat()$/;"	f
 flag	IO.c	/^char flag=0;$/;"	v
+get_Post_Par	TCP_server.c	/^int get_Post_Par(char *buf)$/;"	f
+get_WIFI_Set_Flag	TCP_server.h	/^char get_WIFI_Set_Flag;$/;"	v
+get_WIFI_state	WIFI.c	/^void get_WIFI_state()$/;"	f
+http_res	TCP_server.c	/^char *http_res = "HTTP\/1.1 200 OK\\r\\nServer:zhanghuan\\r\\n"$/;"	v
 info	TCP_server.h	/^struct ip_info *info;$/;"	v	typeref:struct:ip_info
+ip_info	WIFI.h	/^struct ip_info ip_info;$/;"	v	typeref:struct:ip_info
+k	user_main.c	/^	int k;$/;"	m	struct:__anon2	file:
 my_tcp_conn	TCP_client.h	/^struct espconn *my_tcp_conn;$/;"	v	typeref:struct:espconn
 my_tcp_ser	TCP_server.h	/^struct espconn *my_tcp_ser;$/;"	v	typeref:struct:espconn
+o	user_main.c	/^	int o;$/;"	m	struct:__anon2	file:
+os_init	user_main.c	/^void os_init()$/;"	f
+p	user_main.c	/^	char p;$/;"	m	struct:__anon2	file:
+pass	TCP_server.h	/^	char pass[20];	$/;"	m	struct:__anon1
 recon_timer	TCP_client.h	/^LOCAL os_timer_t recon_timer;$/;"	v
 remoteip	TCP_client.c	/^uint8 remoteip[4]={IP};	$/;"	v
+s_WIFI_Info	TCP_server.c	/^WIFI_Set s_WIFI_Info;$/;"	v
 ser_timer	TCP_server.h	/^LOCAL os_timer_t ser_timer;$/;"	v
+ssid	TCP_server.h	/^	char ssid[20];$/;"	m	struct:__anon1
+st	user_main.c	/^}st;$/;"	t	typeref:struct:__anon2	file:
+tt	user_main.c	/^st tt;$/;"	v
+use_Timer	user_main.c	/^void use_Timer(os_timer_t *timer,os_timer_func_t *pfunction,void *parg,int t,char re_falg)$/;"	f
 user_init	user_main.c	/^user_init(void)$/;"	f
 user_rf_cal_sector_set	user_main.c	/^user_rf_cal_sector_set(void)$/;"	f
 user_rf_pre_init	user_main.c	/^user_rf_pre_init(void)$/;"	f
-wifi_handle_event_cb	wifi.c	/^void wifi_handle_event_cb(System_Event_t	*evt)$/;"	f
-wifi_set_station_config	wifi.c	/^void wifi_set_station_config(char *ssid,char *password)$/;"	f
+wifi_handle_event_cb	WIFI.c	/^void wifi_handle_event_cb(System_Event_t	*evt)$/;"	f
+wifi_set_station_config	WIFI.c	/^bool wifi_set_station_config(char *ssid,char *password)$/;"	f

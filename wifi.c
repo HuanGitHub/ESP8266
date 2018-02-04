@@ -1,14 +1,13 @@
 #include "include.h"
 #include "wifi.h"
 #include <string.h>
-void wifi_set_station_config(char *ssid,char *password)
+extern WIFI_Set s_WIFI_Info;
+struct station_config s_Station_Config;
+char WIFI_Flash_Flag ;
+bool wifi_set_station_config(char *ssid,char *password)
 {/*{{{*/
-//	char *wifi_ssid = (char *)os_zalloc(sizeof(char));
-//	char *wifi_pass = (char *)os_zalloc(sizeof(char));
-//	os_memcpy(wifi_ssid,ssid,strlen(ssid));
-//	os_memcpy(wifi_pass,password,strlen(password));
-//	if((wifi_ssid != NULL)&& (wifi_pass != NULL)){
 			struct station_config stationconf;
+			char ret;
 			wifi_set_opmode(0x03);
 			stationconf.bssid_set=0;
 			memset(stationconf.ssid,0,sizeof(stationconf.ssid));
@@ -16,8 +15,15 @@ void wifi_set_station_config(char *ssid,char *password)
 			memcpy(stationconf.ssid,ssid,strlen(ssid));
 			memcpy(stationconf.password,password,strlen(password));
 			wifi_station_set_config(&stationconf);
-			wifi_set_event_handler_cb(wifi_handle_event_cb);
-			return ;
+		//	wifi_set_event_handler_cb(wifi_handle_event_cb);
+			if(wifi_get_ip_info(STATION_IF,&ip_info))
+			{
+				if(ip_info.ip.addr != 0)
+						ret = 1;
+				else
+						ret = 0;
+			}
+			return ret;
 		
 //	}
 }/*}}}*/
@@ -62,12 +68,62 @@ void wifi_handle_event_cb(System_Event_t	*evt)
 					 	 break;
 	 }
 }/*}}}*/
-void wifi_esp_softap_config()
-{
-	wifi_set_opmode_current(0x02);	
 	
+void Auto_Connect_WIFI()
+{
+	memset(&s_Station_Config,0,sizeof(struct station_config));
+	wifi_station_get_config_default(&s_Station_Config);
+	if(strlen(s_Station_Config.ssid))
+	{
+		wifi_set_station_config(s_Station_Config.ssid,s_Station_Config.password);
+	}else{
+			WIFI_Flash_Flag = 1;	
+	}
+		
 }
+void get_WIFI_state()
+{/*{{{*/
 
+			if(wifi_get_ip_info(STATION_IF,&ip_info))
+			{
+				if(ip_info.ip.addr != 0)
+						WIFI_connect_Flag = 1;
+				else
+					 WIFI_connect_Flag = 0;
+			}
+			if(get_WIFI_Set_Flag)
+			{
+				if(!strlen(s_Station_Config.ssid)){
+					wifi_set_station_config(s_WIFI_Info.ssid,s_WIFI_Info.pass);
+					system_restart();	
+				}else{
+					if(strcmp(s_Station_Config.ssid,s_WIFI_Info.ssid)){
+					wifi_set_station_config(s_WIFI_Info.ssid,s_WIFI_Info.pass);
+					system_restart();	
+						
+					}
+				}
+					
+			}
+			system_out_print();
+	
+}/*}}}*/
+void system_out_print()
+{
+	os_printf("\r\n--------------System_Out-------------\r\n\r\n");
+	os_printf("WIFI_connect_Flag :%d\r\n",WIFI_connect_Flag);
+	if(get_WIFI_Set_Flag)
+					os_printf("get new WIFI SSID\r\n");
+
+	os_printf("WIFI_Info.ssid: %s\r\nWIFI_Info.pass %s\r\n",s_WIFI_Info.ssid,s_WIFI_Info.pass);
+	if(WIFI_Flash_Flag)	
+			os_printf("Dont have FLASH WIFI SSID \r\n");
+
+	os_printf("\r\n-------------------------------------\r\n\r\n");
+
+
+
+}
 
 
 
