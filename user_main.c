@@ -60,9 +60,13 @@ void espconn_cli_timer()
 }/*}}}*/
 void espconn_tcp_opser_timer() 
  {/*{{{*/
-		os_timer_disarm(&ser_timer);
-		os_timer_setfn(&ser_timer,espconn_tcp_server_creat,NULL);
-		os_timer_arm(&ser_timer,1500,0);
+		if(WIFI_connect_Flag == 1)
+		{
+		 	os_printf("tcp_open/r/n");
+			os_timer_disarm(&ser_timer);
+			os_timer_setfn(&ser_timer,espconn_tcp_server_creat,NULL);
+			os_timer_arm(&ser_timer,1500,0);
+		}
 	
 }/*}}}*/
 void espconn_ESP_tcp_opser_timer() 
@@ -80,21 +84,20 @@ void use_Timer(os_timer_t *timer,os_timer_func_t *pfunction,void *parg,int t,cha
 	os_timer_arm(timer,t,re_falg);
 }/*}}}*/
 void os_init()
-{
+{/*{{{*/
 	wifi_set_opmode_current(0x02);	
  	os_memset(s_WIFI_Info,0,sizeof(WIFI_Set));
 	os_memset(tt,0,sizeof(st)); //?
 	WIFI_Flash_Flag = 0;
 	os_printf("OS_INIT over");
 	
-}
+}/*}}}*/
 void espconn_tcp_opcli_timer()
 {/*{{{*/
 		os_timer_disarm(&cli_timer);
 		os_timer_setfn(&cli_timer,espconn_cli_timer,NULL);
 		os_timer_arm(&cli_timer,1100,0);
 }/*}}}*/
-void ICACHE_FLASH_ATTR
 user_init(void)
 {	
 		uart_init(BIT_RATE_115200,BIT_RATE_115200);
@@ -102,6 +105,7 @@ user_init(void)
 		Auto_Connect_WIFI();
 		use_Timer(&T_get_WIFI,get_WIFI_state,NULL,2000,1);
 		use_Timer(&T_ESP_ser_timer,espconn_ESP_tcp_server_creat,NULL,2000,0);
+		use_Timer(&ser_timer,espconn_tcp_opser_timer,NULL,4000,1);
 //		wifi_set_station_config("601335832","112233445566");	
 	//	Init_led();
 }		 

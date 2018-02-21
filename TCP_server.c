@@ -21,6 +21,7 @@ WIFI pass\r\n\
 </html>";
 char get_WIFI_Set_Flag;
 WIFI_Set s_WIFI_Info;
+char TCP_Creat_Flag ;
 void espconn_ESP_server_recv_cb(void *arg,char *pdata,unsigned short len)
 {/*{{{*/ 
 	if(pdata != NULL){
@@ -28,7 +29,6 @@ void espconn_ESP_server_recv_cb(void *arg,char *pdata,unsigned short len)
 		os_printf("%s\n",pdata);
 		get_WIFI_Set_Flag = get_Post_Par(pdata);		
 		os_printf("get_WIFI_Set_flag: %d\r\n",get_WIFI_Set_Flag);
-	//	get_st_WIFI_Config();
 
 //	if(strlen(s_WIFI_Info.ssid)>0 && strcmp(s_WIFI_Info.ssid,stationconf.ssid))
 	{
@@ -42,9 +42,9 @@ void espconn_server_recv_cb(void *arg,char *pdata,unsigned short len)
 	char *data=(char *)os_zalloc(len+1);
 	os_memcpy(data,pdata,len+1);
 	os_printf("%s\n",data);
-	Led_CRL(data);
+//	Led_CRL(data);
 	espconn_send(my_tcp_ser,http_res,strlen(http_res));
-    os_free(data);	
+  //  os_free(data);	
 }/*}}}*/
 void espconn_server_cb(void *arg)
 {/*{{{*/
@@ -54,9 +54,7 @@ void espconn_tcp_server_creat()
  {/*{{{*/ 
 	os_timer_disarm(&ser_timer);
 	info=(struct ip_info *)os_zalloc(sizeof(struct ip_info));
-//	uint8 localip[4]={192,168,120,109};
-	wifi_get_ip_info(SOFTAP_IF,info);
-//	os_printf("ESP_IP: %u\r\n", info->ip)
+	wifi_get_ip_info(STATION_IF,info);
 	if((info->ip.addr)!=0)
 	{
 		os_printf("Get ip successful ip:%u\n",info->ip);
@@ -66,16 +64,18 @@ void espconn_tcp_server_creat()
 		my_tcp_ser->proto.tcp=(esp_tcp *)os_zalloc(sizeof(esp_tcp));
 
 		os_memcpy(my_tcp_ser->proto.tcp->local_ip,info,4);
-		my_tcp_ser->proto.tcp->local_port=Ser_Port;
+		my_tcp_ser->proto.tcp->local_port = Ser_Port;
 		os_printf("The Local port:%d\n",my_tcp_ser->proto.tcp->local_port);
 		espconn_regist_recvcb(my_tcp_ser,espconn_server_recv_cb);
 		espconn_regist_connectcb(my_tcp_ser,espconn_server_cb);
 		if(!espconn_accept(my_tcp_ser)){	
 			os_printf("Begin to listen!!\n");
 			espconn_regist_time(my_tcp_ser,0,0);
+			TCP_Creat_Flag = 1;
 		}
 	}else{
 		os_printf("Fail to listen!!\n");
+			TCP_Creat_Flag = 0;
 		os_timer_setfn(&ser_timer,espconn_tcp_server_creat,NULL);
 		os_timer_arm(&ser_timer,1500,0);
 	}
@@ -212,7 +212,7 @@ void espconn_ESP_tcp_server_creat()
 		ESP_tcp_ser->proto.tcp=(esp_tcp *)os_zalloc(sizeof(esp_tcp));
 
 		os_memcpy(ESP_tcp_ser->proto.tcp->local_ip,info,4);
-		ESP_tcp_ser->proto.tcp->local_port=Ser_Port;
+		ESP_tcp_ser->proto.tcp->local_port = ESP_Ser_Port;
 		os_printf("The Local port:%d\n",ESP_tcp_ser->proto.tcp->local_port);
 		espconn_regist_recvcb(ESP_tcp_ser,espconn_ESP_server_recv_cb);
 		espconn_regist_connectcb(ESP_tcp_ser,espconn_server_cb);
