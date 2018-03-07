@@ -1,3 +1,4 @@
+#include "espconn.h"
 #ifndef __TCP_SERVER_H
 #define __TCP_SERVER_H
 #define Ser_Port 19536
@@ -11,6 +12,7 @@ void espconn_server_recv_cb(void *arg,char *pdata,unsigned short len);
 extern char get_WIFI_Set_Flag;
 void espconn_server_cb(void *arg);
 void espconn_tcp_server_creat();
+void Tcp_regist_fun(struct espconn *my_tcp_ser);
 typedef struct{
 	char ssid[20];
 	char pass[20];	

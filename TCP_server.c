@@ -7,48 +7,74 @@ char *http_res = "HTTP/1.1 200 OK\r\nServer:zhanghuan\r\n"
 <!DOCTYPE html>\r\n\
 <html>\r\n\
 <head>\r\n\
-<title>Title of the document</title>\r\n\
+<title>Input WIFI Info</title>\r\n\
+<meta charset=unicode\" />\r\n\
 </head>\r\n\
 <body>\r\n\
-<form action = \"\" method = \"post\">\r\n\
-WIFI name:\r\n\
-<input type = \"text\" name = \"ssid\">\r\n\
-WIFI pass\r\n\
-<input type = \"text\" name = \"pass\">\r\n\
-<input type = \"submit\" value = \"Submit\">\r\n\
-</form>\r\n\
+<div id=\"content\" style=\"margin:0 auto; background-color:#0F6; width:1000px; height:500px; position:relative;\">\r\n\
+<div style=\"padding-top:60px\">\r\n\
+        	<p style=\"display:inline\"><center><h1>Welcome</h1></center></p>\r\n\
+</div>\r\n\
+<div class=\"login\" style=\"position:absolute; top:50%;left:50%;margin-top:-100px;margin-left:-200px;background:#69F; width:400px; height: 200px; border-radius:10px;\">\r\n\
+<div style=\" margin-left:100px;margin-top:50px\">\r\n\
+	   <p style=\"display:inline\">WIFI_Name&nbsp;:</p>\r\n\
+		   <input type=\"text\" value=\"\"/>\r\n\
+	 </div>\r\n\
+<div style=\"margin-left:100px;margin-top:20px\">\r\n\
+	 <p style=\"display:inline\">ÃÜ&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Âë&nbsp;:&nbsp;</p>\r\n\
+		 <input type=\"password\" value=\"\"/>\r\n\
+   </div>\r\n\
+        <input type=\"button\" value=\"È·ÈÏ\" \"/>\r\n\
+        <input type=\"button\" value=\"ÖØÖÃ\" \"/>\r\n\
+        </div>\r\n\
 </body>\r\n\
 </html>";
 char get_WIFI_Set_Flag;
 WIFI_Set s_WIFI_Info;
 char TCP_Creat_Flag ;
+char NEW_Connector = 0;
 void espconn_ESP_server_recv_cb(void *arg,char *pdata,unsigned short len)
 {/*{{{*/ 
 	if(pdata != NULL){
    		espconn_send(ESP_tcp_ser,http_res,strlen(http_res));
 		os_printf("%s\n",pdata);
+		os_printf("%d\r\n",strlen(http_res));
 		get_WIFI_Set_Flag = get_Post_Par(pdata);		
-		os_printf("get_WIFI_Set_flag: %d\r\n",get_WIFI_Set_Flag);
+	//	os_printf("get_WIFI_Set_flag: %d\r\n",get_WIFI_Set_Flag);
 
-//	if(strlen(s_WIFI_Info.ssid)>0 && strcmp(s_WIFI_Info.ssid,stationconf.ssid))
-	{
-		os_printf("Have new WIFI ssid");
-//		wifi_set_station_config(s_WIFI_Info.ssid,s_WIFI_Info.pass);
 	}
-	}
+}/*}}}*/
+void disconnect(void *arg)
+{/*{{{*/
+	if(NEW_Connector != 0)
+		NEW_Connector--;	
 }/*}}}*/
 void espconn_server_recv_cb(void *arg,char *pdata,unsigned short len)
 {/*{{{*/ 
+	sint8 ret;
 	char *data=(char *)os_zalloc(len+1);
 	os_memcpy(data,pdata,len+1);
 	os_printf("%s\n",data);
-//	Led_CRL(data);
-	espconn_send(my_tcp_ser,http_res,strlen(http_res));
-  //  os_free(data);	
+	os_printf("Fifo_len: %d\r\n RcvData: %s\r\n",fifo_len,RcvData);
+	ret = espconn_send(my_tcp_ser,RcvData,fifo_len);
+	os_printf("ret: %d\r\n",fifo_len);
 }/*}}}*/
 void espconn_server_cb(void *arg)
 {/*{{{*/
 	os_printf("Have client connect\n");
+	NEW_Connector ++;
+}/*}}}*/
+void reconnect_callback(void *arg,sint8 err)
+{/*{{{*/
+	switch(err)
+	{
+		case ESPCONN_TIMEOUT:	os_printf("TCP disconnect of Time out");	break;
+		case ESPCONN_ABRT:	os_printf("TCP Exceptional disconnect\r\n");	break;
+							
+	}
+	if(NEW_Connector != 0)
+			NEW_Connector--;
+	
 }/*}}}*/
 void espconn_tcp_server_creat()
  {/*{{{*/ 
@@ -66,13 +92,12 @@ void espconn_tcp_server_creat()
 		os_memcpy(my_tcp_ser->proto.tcp->local_ip,info,4);
 		my_tcp_ser->proto.tcp->local_port = Ser_Port;
 		os_printf("The Local port:%d\n",my_tcp_ser->proto.tcp->local_port);
-		espconn_regist_recvcb(my_tcp_ser,espconn_server_recv_cb);
-		espconn_regist_connectcb(my_tcp_ser,espconn_server_cb);
 		if(!espconn_accept(my_tcp_ser)){	
 			os_printf("Begin to listen!!\n");
 			espconn_regist_time(my_tcp_ser,0,0);
 			TCP_Creat_Flag = 1;
 		}
+		Tcp_regist_fun(my_tcp_ser);
 	}else{
 		os_printf("Fail to listen!!\n");
 			TCP_Creat_Flag = 0;
@@ -80,6 +105,14 @@ void espconn_tcp_server_creat()
 		os_timer_arm(&ser_timer,1500,0);
 	}
 	os_free(info);
+}/*}}}*/
+void Tcp_regist_fun(struct espconn *my_tcp_ser)
+{/*{{{*/
+		espconn_regist_recvcb(my_tcp_ser,espconn_server_recv_cb);
+		espconn_regist_connectcb(my_tcp_ser,espconn_server_cb);
+		espconn_regist_disconcb(my_tcp_ser,disconnect);
+		espconn_regist_reconcb(my_tcp_ser,reconnect_callback);
+	
 }/*}}}*/
 int get_Post_Par(char *buf)
 {/*{{{*/

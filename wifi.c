@@ -1,8 +1,10 @@
 #include "include.h"
 #include "wifi.h"
 #include <string.h>
+#include "espconn.h"
 extern WIFI_Set s_WIFI_Info;
 extern char TCP_Creat_Flag;
+extern NEW_Connector;
 struct station_config s_Station_Config;
 char WIFI_Flash_Flag ;
 bool wifi_set_station_config(char *ssid,char *password)
@@ -105,7 +107,7 @@ void get_WIFI_state()
 			}
 		}
 	}
-	system_out_print();
+//	system_out_print();
 
 }/*}}}*/
 void system_out_print()
@@ -122,8 +124,8 @@ void system_out_print()
 	if(WIFI_Flash_Flag)	
 			os_printf("Dont have FLASH WIFI SSID \r\n");
 	if(TCP_Creat_Flag)
-			os_printf("TCP_Server Creat fuccessful");
-
+	os_printf("New TCP Connect user:%d\r\n",NEW_Connector);
+//	os_printf("TCP_Server Creat fuccessful\r\n");
 	os_printf("\r\n-------------------------------------\r\n\r\n");
 
 }/*}}}*/
