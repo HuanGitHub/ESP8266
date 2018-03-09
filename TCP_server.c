@@ -4,7 +4,7 @@
 char *http_res = "HTTP/1.1 200 OK\r\nServer:zhanghuan\r\n"
 "Accept-Ranges:bytes\r\nContent-Length:1024\r\nConnection:close\r\n"
 "Content-Type:text/html\r\n\r\n\
-<!DOCTYPE html>\r\n\
+<!DOCTYPE>\r\n\
 <html>\r\n\
 <head>\r\n\
 <title>Input WIFI Info</title>\r\n\
@@ -12,21 +12,26 @@ char *http_res = "HTTP/1.1 200 OK\r\nServer:zhanghuan\r\n"
 </head>\r\n\
 <body>\r\n\
 <div id=\"content\" style=\"margin:0 auto; background-color:#0F6; width:1000px; height:500px; position:relative;\">\r\n\
-<div style=\"padding-top:60px\">\r\n\
+		\
+	<div style=\"padding-top:60px\">\r\n\
         	<p style=\"display:inline\"><center><h1>Welcome</h1></center></p>\r\n\
-</div>\r\n\
+	</div>\r\n\
+	\
 <div class=\"login\" style=\"position:absolute; top:50%;left:50%;margin-top:-100px;margin-left:-200px;background:#69F; width:400px; height: 200px; border-radius:10px;\">\r\n\
-<div style=\" margin-left:100px;margin-top:50px\">\r\n\
-	   <p style=\"display:inline\">WIFI_Name&nbsp;:</p>\r\n\
-		   <input type=\"text\" value=\"\"/>\r\n\
-	 </div>\r\n\
-<div style=\"margin-left:100px;margin-top:20px\">\r\n\
-	 <p style=\"display:inline\">ÃÜ&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Âë&nbsp;:&nbsp;</p>\r\n\
-		 <input type=\"password\" value=\"\"/>\r\n\
-   </div>\r\n\
-        <input type=\"button\" value=\"È·ÈÏ\" \"/>\r\n\
-        <input type=\"button\" value=\"ÖØÖÃ\" \"/>\r\n\
-        </div>\r\n\
+	\
+	<form action=\"\" method=\"post\">\
+	<div style=\" margin-left:90px;margin-top:50px\">\r\n\
+	    <p style=\"display:inline\">WIFIName&nbsp;&nbsp:</p>\r\n\
+	    <input type=\"text\" name=\"ssid\"value=\"\"/>\r\n\
+		<p style=\"display:inline\">PassWorld&nbsp;&nbsp:</p>\r\n\
+		<input type=\"password\" name=\"pass\"value=\"\"/>\r\n\
+   	</div>\r\n\
+   	<div style=\" margin-left:350px;margin-top:35px\">\r\n\
+        <input type=\"submit\" value=\"Commit\" style=\"margin:0 auto; background-color:#666 font-size:16px\"\"/>\r\n\
+	</div>\r\n\
+	</form>\
+</div>\r\n\
+</div>\r\n\
 </body>\r\n\
 </html>";
 char get_WIFI_Set_Flag;
