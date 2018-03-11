@@ -102,8 +102,8 @@ void get_WIFI_state()
 			system_restart();	
 		}else{
 			if(strcmp(s_Station_Config.ssid,s_WIFI_Info.ssid)){
-			wifi_set_station_config(s_WIFI_Info.ssid,s_WIFI_Info.pass);
-			system_restart();	
+				wifi_set_station_config(s_WIFI_Info.ssid,s_WIFI_Info.pass);
+				system_restart();	
 			}
 		}
 	}

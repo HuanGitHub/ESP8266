@@ -1,8 +1,8 @@
 #include "include.h"
 #include "TCP_server.h"
 #include <string.h>
-char *http_res = "HTTP/1.1 200 OK\r\nServer:zhanghuan\r\n"
-"Accept-Ranges:bytes\r\nContent-Length:1024\r\nConnection:close\r\n"
+char *http_res = "HTTP/1.1 200 OK\r\nServer:zhanghuan\r\n" 
+"Accept-Ranges:bytes\r\nContent-Length:1024\r\nConnection:close\r\n"/*{{{*/ 
 "Content-Type:text/html\r\n\r\n\
 <!DOCTYPE>\r\n\
 <html>\r\n\
@@ -34,6 +34,7 @@ char *http_res = "HTTP/1.1 200 OK\r\nServer:zhanghuan\r\n"
 </div>\r\n\
 </body>\r\n\
 </html>";
+/*}}}*/
 char get_WIFI_Set_Flag;
 WIFI_Set s_WIFI_Info;
 char TCP_Creat_Flag ;
@@ -60,9 +61,26 @@ void espconn_server_recv_cb(void *arg,char *pdata,unsigned short len)
 	char *data=(char *)os_zalloc(len+1);
 	os_memcpy(data,pdata,len+1);
 	os_printf("%s\n",data);
-	os_printf("Fifo_len: %d\r\n RcvData: %s\r\n",fifo_len,RcvData);
+	if((!strcmp(data,"get") && NEW_Connector != 0 )&& (RcvData[0]!=0x00))
+	{
+		espconn_send(my_tcp_ser,RcvData,fifo_len);
+	}
+//	if(!strcmp(data,"get"))
+//	{
+//		os_printf("Have cline query data\r\n");
+//		os_printf("Fifo_len: %d\r\nRcvData: %s\r\n",fifo_len,RcvData);
+////		espconn_send(my_tcp_ser,&RcvData[0],1);
+//		ret = espconn_send(my_tcp_ser,&RcvData[2],1);
+//		ret = espconn_send(my_tcp_ser,&RcvData[1],1);
+//	}
 	ret = espconn_send(my_tcp_ser,RcvData,fifo_len);
-	os_printf("ret: %d\r\n",fifo_len);
+	if(ret){
+		switch(ret){
+			case ESPCONN_ARG: os_printf("not find Espconn\r\n");	break;
+			case ESPCONN_MEM: os_printf("MEM not enought\r\n");		break;
+			case ESPCONN_MAXNUM:	os_printf("send fail\r\n");		break;
+		}
+	}
 }/*}}}*/
 void espconn_server_cb(void *arg)
 {/*{{{*/
@@ -73,7 +91,7 @@ void reconnect_callback(void *arg,sint8 err)
 {/*{{{*/
 	switch(err)
 	{
-		case ESPCONN_TIMEOUT:	os_printf("TCP disconnect of Time out");	break;
+		case ESPCONN_TIMEOUT:	os_printf("TCP disconnect of Time out\r\n");	break;
 		case ESPCONN_ABRT:	os_printf("TCP Exceptional disconnect\r\n");	break;
 							
 	}
@@ -111,12 +129,16 @@ void espconn_tcp_server_creat()
 	}
 	os_free(info);
 }/*}}}*/
+void send_data_callback(){/*{{{*/
+	os_printf("data send successful\r\n");
+}/*}}}*/
 void Tcp_regist_fun(struct espconn *my_tcp_ser)
 {/*{{{*/
 		espconn_regist_recvcb(my_tcp_ser,espconn_server_recv_cb);
 		espconn_regist_connectcb(my_tcp_ser,espconn_server_cb);
 		espconn_regist_disconcb(my_tcp_ser,disconnect);
 		espconn_regist_reconcb(my_tcp_ser,reconnect_callback);
+		espconn_regist_sentcb(my_tcp_ser,send_data_callback);
 	
 }/*}}}*/
 int get_Post_Par(char *buf)
@@ -154,7 +176,6 @@ int get_Post_Par(char *buf)
 		os_printf("end: %s\r\n WIFI_Info.ssid: %s\r\nWIFI_Info.pass %s\r\n",end,s_WIFI_Info.ssid,s_WIFI_Info.pass);
 		return 1;	
 	}
-
 }/*}}}*/
 void Led_CRL(char *buf)
 {/*{{{*/
@@ -243,7 +264,6 @@ void espconn_ESP_tcp_server_creat()
 	os_printf("Begin Create ESP_TCP_Server");
 	if((info->ip.addr)!=0)
 	{
-		os_printf("Get ip successful ip:%u\n",info->ip);
 		ESP_tcp_ser=(struct espconn *)os_zalloc(sizeof(struct espconn));
 		ESP_tcp_ser->type=ESPCONN_TCP;
 		ESP_tcp_ser->state=ESPCONN_NONE;
@@ -251,7 +271,7 @@ void espconn_ESP_tcp_server_creat()
 
 		os_memcpy(ESP_tcp_ser->proto.tcp->local_ip,info,4);
 		ESP_tcp_ser->proto.tcp->local_port = ESP_Ser_Port;
-		os_printf("The Local port:%d\n",ESP_tcp_ser->proto.tcp->local_port);
+		os_printf("The ESP Local port:%d\n",ESP_tcp_ser->proto.tcp->local_port);
 		espconn_regist_recvcb(ESP_tcp_ser,espconn_ESP_server_recv_cb);
 		espconn_regist_connectcb(ESP_tcp_ser,espconn_server_cb);
 		if(!espconn_accept(ESP_tcp_ser)){	
