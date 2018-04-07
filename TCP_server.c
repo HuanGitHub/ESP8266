@@ -65,21 +65,13 @@ void espconn_server_recv_cb(void *arg,char *pdata,unsigned short len)
 	{
 		espconn_send(my_tcp_ser,RcvData,fifo_len);
 	}
-//	if(!strcmp(data,"get"))
-//	{
-//		os_printf("Have cline query data\r\n");
-//		os_printf("Fifo_len: %d\r\nRcvData: %s\r\n",fifo_len,RcvData);
-////		espconn_send(my_tcp_ser,&RcvData[0],1);
-//		ret = espconn_send(my_tcp_ser,&RcvData[2],1);
-//		ret = espconn_send(my_tcp_ser,&RcvData[1],1);
-//	}
 	ret = espconn_send(my_tcp_ser,RcvData,fifo_len);
 	if(ret){
-		switch(ret){
+		switch(ret){/*{{{*/
 			case ESPCONN_ARG: os_printf("not find Espconn\r\n");	break;
 			case ESPCONN_MEM: os_printf("MEM not enought\r\n");		break;
 			case ESPCONN_MAXNUM:	os_printf("send fail\r\n");		break;
-		}
+		}/*}}}*/
 	}
 }/*}}}*/
 void espconn_server_cb(void *arg)
@@ -129,7 +121,8 @@ void espconn_tcp_server_creat()
 	}
 	os_free(info);
 }/*}}}*/
-void send_data_callback(){/*{{{*/
+void send_data_callback()
+{/*{{{*/
 	os_printf("data send successful\r\n");
 }/*}}}*/
 void Tcp_regist_fun(struct espconn *my_tcp_ser)

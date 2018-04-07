@@ -2,6 +2,7 @@
 #include "wifi.h"
 #include <string.h>
 #include "espconn.h"
+#define OS_PRINT	0
 extern WIFI_Set s_WIFI_Info;
 extern char TCP_Creat_Flag;
 extern NEW_Connector;
@@ -107,7 +108,9 @@ void get_WIFI_state()
 			}
 		}
 	}
-//	system_out_print();
+#if OS_PRINT
+	system_out_print();
+#endif
 
 }/*}}}*/
 void system_out_print()

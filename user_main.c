@@ -1,5 +1,12 @@
 #include "include.h"
+#define TCP_SERVER 	0
+#define TCP_CLINE	1
 extern WIFI_Set s_WIFI_Info;
+LOCAL os_timer_t TCP_timer;
+LOCAL os_timer_t SData_timer;
+extern char Cli_stat;
+extern struct espconn *my_tcp_conn;
+uint8 NULL_Buff[10]={0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00a};
 uint32 ICACHE_FLASH_ATTR
 user_rf_cal_sector_set(void)
 {/*{{{*/
@@ -38,21 +45,20 @@ user_rf_pre_init(void)
 }/*}}}*/
 void espconn_cli_timer()
 {/*{{{*/
-	struct ip_info ipconfig;
+//	struct ip_info ipconfig;
 	os_timer_disarm(&cli_timer);
-	wifi_get_ip_info(STATION_IF,&ipconfig);
-	if(ipconfig.ip.addr){
+//	wifi_get_ip_info(STATION_IF,&ipconfig);
+//	if(ipconfig.ip.addr){
 		os_printf("Wifi connect successfun !!\n");
-		os_printf("Begin connect Tcp server\n");
-		espconn_tcp_client_connect();
-	}else{
-		os_printf("Wifi connect fail !!\n");
-		os_timer_setfn(&cli_timer,espconn_cli_timer,NULL);
-		os_timer_arm(&cli_timer,500,0);
-	}
+//		os_printf("Begin connect Tcp server\n");
+//	}else{
+//		os_printf("Wifi connect fail !!\n");
+//		os_timer_setfn(&cli_timer,espconn_cli_timer,NULL);
+//		os_timer_arm(&cli_timer,500,0);
+//	}
 }/*}}}*/
 void espconn_tcp_opser_timer() 
- {/*{{{*/
+{ /*{{{*/
 		if(WIFI_connect_Flag == 1)
 		{
 //		 	os_printf("tcp_open/r/n");
@@ -78,28 +84,56 @@ void use_Timer(os_timer_t *timer,os_timer_func_t *pfunction,void *parg,int t,cha
 }/*}}}*/
 void os_init()
 {/*{{{*/
+	uart_init(BIT_RATE_115200,BIT_RATE_115200);
 	wifi_set_opmode_current(0x02);	
 // 	os_memset(s_WIFI_Info,0,sizeof(WIFI_Set));
 //	os_memset(tt,0,sizeof(st)); //?
 	WIFI_Flash_Flag = 0;
+	Auto_Connect_WIFI();
 	os_printf("OS_INIT over");
 	
 }/*}}}*/
 void espconn_tcp_opcli_timer()
 {/*{{{*/
 		os_timer_disarm(&cli_timer);
-		os_timer_setfn(&cli_timer,espconn_cli_timer,NULL);
-		os_timer_arm(&cli_timer,1100,0);
+//		os_timer_setfn(&cli_timer,espconn_cli_timer,NULL);
+//		os_timer_arm(&cli_timer,1100,0);
+		espconn_tcp_client_connect();
+}/*}}}*/
+void Begin_TCP()
+{/*{{{*/
+    if(WIFI_connect_Flag)
+	{
+		os_timer_disarm(&TCP_timer);	
+#if TCP_SERVER
+		use_Timer(&ser_timer,espconn_tcp_opser_timer,NULL,4000,1);
+#endif
+#if TCP_CLINE
+	//	use_Timer(&cli_timer,espconn_tcp_client_connect,NULL,4000,1);
+		espconn_tcp_client_connect();
+#endif
+	}else{
+		os_printf("WIFI not connect\n");	
+	}
+	
+}/*}}}*/
+void Send_Data()
+{/*{{{*/
+	if(Cli_stat && (RcvData[0]!=0x00))
+	{
+		espconn_send(my_tcp_conn,RcvData,fifo_len);
+		memcpy(RcvData,NULL_Buff,sizeof(NULL_Buff));
+	}else{
+//		espconn_send(my_tcp_conn,NULL_Buff,sizeof(NULL_Buff));
+	}
 }/*}}}*/
 user_init(void)
 {	
-		uart_init(BIT_RATE_115200,BIT_RATE_115200);
 		os_init();
-		Auto_Connect_WIFI();
 		use_Timer(&T_get_WIFI,get_WIFI_state,NULL,2000,1);		//get WIFI state
-		use_Timer(&T_ESP_ser_timer,espconn_ESP_tcp_server_creat,NULL,2000,0);		//Begin ESP_TCP_server
-		use_Timer(&ser_timer,espconn_tcp_opser_timer,NULL,4000,1);
-//		wifi_set_station_config("601335832","112233445566");	
-	//	Init_led();
+//		use_Timer(&T_ESP_ser_timer,espconn_ESP_tcp_server_creat,NULL,2000,0);		//Begin ESP_TCP_server
+		use_Timer(&TCP_timer,Begin_TCP,NULL,1000,1);
+		use_Timer(&SData_timer,Send_Data,NULL,1000,1);
+
 }		 
 
