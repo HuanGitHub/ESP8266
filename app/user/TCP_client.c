@@ -3,7 +3,7 @@
 #define Port 8080
 #define IP 192,168,0,107
 uint8 remoteip[4]={IP};	
-char Cli_stat =0;
+char Cli_stat ;
 void Tcp_cline_regist(struct espconn *my_tcp_conn);
 void Tcp_cline_connect();
 void cli_disconnect();

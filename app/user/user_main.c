@@ -1,6 +1,7 @@
 #include "include.h"
 #define TCP_SERVER 	0
-#define TCP_CLINE	1
+#define TCP_CLINE	0
+#define ONENET_TCP  1
 extern WIFI_Set s_WIFI_Info;
 LOCAL os_timer_t TCP_timer;
 LOCAL os_timer_t SData_timer;
@@ -90,6 +91,7 @@ void os_init()
 //	os_memset(tt,0,sizeof(st)); //?
 	WIFI_Flash_Flag = 0;
 	Auto_Connect_WIFI();
+	//Init_led();
 	os_printf("OS_INIT over");
 	
 }/*}}}*/
@@ -112,6 +114,9 @@ void Begin_TCP()
 	//	use_Timer(&cli_timer,espconn_tcp_client_connect,NULL,4000,1);
 		espconn_tcp_client_connect();
 #endif
+#if ONENET_TCP
+		OneNet_Connect_TcpSer();
+#endif
 	}else{
 		os_printf("WIFI not connect\n");	
 	}
@@ -119,21 +124,23 @@ void Begin_TCP()
 }/*}}}*/
 void Send_Data()
 {/*{{{*/
-	if(Cli_stat && (RcvData[0]!=0x00))
+	
+	if(Cli_stat)
 	{
-		espconn_send(my_tcp_conn,RcvData,fifo_len);
-		memcpy(RcvData,NULL_Buff,sizeof(NULL_Buff));
-	}else{
-//		espconn_send(my_tcp_conn,NULL_Buff,sizeof(NULL_Buff));
+		
+
+			
 	}
 }/*}}}*/
 user_init(void)
 {	
 		os_init();
-		use_Timer(&T_get_WIFI,get_WIFI_state,NULL,2000,1);		//get WIFI state
-//		use_Timer(&T_ESP_ser_timer,espconn_ESP_tcp_server_creat,NULL,2000,0);		//Begin ESP_TCP_server
+//		wifi_set_station_config("iPhone","123456789");
+		use_Timer(&T_get_WIFI,get_WIFI_state,NULL,5000,1);		//get WIFI state
+		use_Timer(&T_ESP_ser_timer,espconn_ESP_tcp_server_creat,NULL,2000,0);		//Begin ESP_TCP_server
 		use_Timer(&TCP_timer,Begin_TCP,NULL,1000,1);
-		use_Timer(&SData_timer,Send_Data,NULL,1000,1);
+//		use_Timer(&SData_timer,Send_Data,NULL,1000,1);
+	
 
 }		 
 

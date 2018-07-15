@@ -2,7 +2,7 @@
 #ifndef __TCP_SERVER_H
 #define __TCP_SERVER_H
 #define Ser_Port 19536
-#define ESP_Ser_Port 19537
+#define ESP_Ser_Port 80
 LOCAL os_timer_t ser_timer;
 LOCAL os_timer_t T_ESP_ser_timer;
 struct espconn *my_tcp_ser;

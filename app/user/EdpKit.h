@@ -1,6 +1,6 @@
 #ifndef __EDP_KIT_H__
 #define __EDP_KIT_H__
-
+#include "include.h"
 #ifdef EDPKIT_EXPORTS
 #define EDPKIT_DLL __declspec(dllexport)
 #else
@@ -9,30 +9,12 @@
 
 #include "Common.h"
 #include "cJSON.h"
-/*
- * history
- * 2015-06-01 v1.0.1 wululu fix bug: malloc for string, MUST memset to 0
- * 2015-07-10 v1.1.0 wusongwei add UnpackCmdReq() and PacketCmdResp()
- * 2015-07-13 v1.1.1 wululu 增加封装json的接口, windows版本dll
- * 2015-07-13 v1.1.2 wululu 支持double和string类型的打包函数和解包函数
- * 2015-07-15 v1.1.3 wusongwei 添加SAVEACK响应
- * 2015-07-20 v1.1.4 wusongwei 添加/修改SAVEDATA消息的打包/解包函数
- * 2016-04-08 v1.1.5 wangmanjie 添加savedata 类型6、7的打包解包函数
- */
 
-#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-#define localtime_r(a,b)	localtime_s(b,a)
-#endif
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*---------------------------------------------------------------------------*/
 #define MOSQ_MSB(A)         (uint8)((A & 0xFF00) >> 8)
 #define MOSQ_LSB(A)         (uint8)(A & 0x00FF)
-#define BUFFER_SIZE         (0x01<<20) 
+#define BUFFER_SIZE         (0x01<<8) 
 #define PROTOCOL_NAME       "EDP"
 #define PROTOCOL_VERSION    1
 
@@ -106,25 +88,8 @@ typedef enum {
     kTypeFloatWithTime  = 0x07
 }SaveDataType;
 
-/*存储转发数据类型6中时间结构，*/
-EDPKIT_DLL
-typedef struct stDataTime
-{
-	uint16	year;	/*年；如2016*/
-	uint8	month;	/*月；如4*/
-	uint8	day;	/*日；如5*/
-	uint8	hour;	/*时；如14*/
-	uint8	minute;	/*分；如30*/
-	uint8	second;	/*秒；如28*/
-}DataTime,*LPDataTime;
 
-/*存储转发数据类型7结构体*/
-EDPKIT_DLL
-typedef struct stFloatDPS
-{
-    uint16  ds_id;  /*数据流ID*/
-    float   f_data; /*float 数据*/
-}FloatDPS;
+
 
 /*-------------发送buffer, 接收buffer, EDP包结构定义-------------------------*/
 EDPKIT_DLL
@@ -166,19 +131,7 @@ void DeleteBuffer(Buffer** buf);
  *          <0      失败, 内存不够
  *          =0      成功
  */
-EDPKIT_DLL
-int32 CheckCapacity(Buffer* buf, uint32 len);
 
-/*------------------------读取EDP包数据的接口-------------------------------*/
-/* 
- * 函数名:  ReadByte
- * 功能:    按EDP协议, 从Buffer(包)中读取一个字节数据
- * 参数:    pkg     EDP包
- *          val     数据(一个字节)
- * 返回值:  类型 (int32)
- *          <0      失败, pkg中无数据
- *          =0      成功
- */
 EDPKIT_DLL
 int32 ReadByte(EdpPacket* pkg, uint8* val);
 /* 
@@ -241,19 +194,6 @@ int32 ReadFloat(EdpPacket* pkg, float* val);
  */
 EDPKIT_DLL
 int32 ReadStr(EdpPacket* pkg, char** val);
-
-
-/* 
- * 函数名:  ReadDateTime
- * 功能:    按EDP协议, 从Buffer(包)中读取一个日期时间格式
- * 参数:    pkg:     EDP包
- *        	 	  val  :    包含年月日时分秒的时间格式结构体 指针
- * 返回值:  类型 (int32)
- *          <0      失败, pkg中无数据
- *          =0      成功
- */
-EDPKIT_DLL
-int32 ReadDataTime(EdpPacket* pkg, LPDataTime val);
 
 
 /* 
@@ -356,62 +296,9 @@ int32 WriteStr(Buffer* buf, const char *str);
  */
 EDPKIT_DLL
 int32 WriteRemainlen(Buffer* buf, uint32 len_val);
-/* 
- * 函数名:  IsPkgComplete 
- * 功能:    判断接收到的Buffer, 是否为一个完整的EDP包
- * 参数:    buf     接收到的Buffer(二进制流)
- * 返回值:  类型 (int32)
- *          =0      数据还未收完, 需要继续接收
- *          >0      成功
- *          <0      数据错误, 不符合EDP协议
- */
-EDPKIT_DLL
-int32 IsPkgComplete(RecvBuffer* buf);
 
-/*-----------------------------客户端操作的接口------------------------------*/
-/* 
- * 函数名:  GetEdpPacket 
- * 功能:    将接收到的二进制流, 分解成一个一个的EDP包
- * 说明:    返回的EDP包使用后, 需要删除
- * 相关函数:EdpPacketType, Unpack***类函数
- * 参数:    buf         接收缓存
- * 返回值:  类型 (EdpPacket*) 
- *          非空        EDP协议包
- *          为空        无完整的EDP协议包
- */
-EDPKIT_DLL
-EdpPacket* GetEdpPacket(RecvBuffer* buf);
 
-/* 
- * 函数名:  EdpPacketType 
- * 功能:    获取一个EDP包的消息类型, 客户程序根据消息类型做不同的处理
- * 相关函数:Unpack***类函数
- * 参数:    pkg         EDP协议包
- * 返回值:  类型 (uint8) 
- *          值          消息类型(详细参见本h的消息类型定义)
- */
-/* 例子:
- * ...
- * int8 mtype = EdpPacketType(pkg);
- * switch(mtype)
- * {
- *  case CONNRESP:
- *      UnpackConnectResp(pkg);
- *      break;
- *  case PUSHDATA:
- *      UnpackPushdata(pkg, src_devid, data, data_len);
- *      break;
- *  case SAVEDATA:
- *      UnpackSavedata(pkg, src_devid, flag, data);
- *      break;
- *  case PINGRESP:
- *      UnpackPingResp(pkg); 
- *      break;
- *  ...
- * }
- */
-EDPKIT_DLL
-uint8 EdpPacketType(EdpPacket* pkg);
+
 
 /* 
  * 函数名:  PacketConnect1 
@@ -428,588 +315,22 @@ uint8 EdpPacketType(EdpPacket* pkg);
 EDPKIT_DLL
 EdpPacket* PacketConnect1(const char* devid, const char* auth_key);
 
-/* 
- * 函数名:  PacketConnect2 
- * 功能:    打包 由设备到设备云的EDP协议包, 连接设备云的请求(登录认证方式2)
- * 说明:    返回的EDP包发送给设备云后, 需要客户程序删除该包
- *          设备云会回复连接响应给设备
- * 相关函数:UnpackConnectResp
- * 参数:    userid      用户ID, 在平台注册账号时平台返回的用户ID
- *          auth_info   鉴权信息, 在平台申请设备时填写设备的auth_info属性
- *                      (json对象字符串), 该属性需要具备唯一性
- * 返回值:  类型 (EdpPacket*) 
- *          非空        EDP协议包
- *          为空        EDP协议包生成失败 
- */
-EDPKIT_DLL
-EdpPacket* PacketConnect2(const char* userid, const char* auth_info);
 
-/* 
- * 函数名:  UnpackConnectResp
- * 功能:    解包 由设备云到设备的EDP协议包, 连接响应
- * 说明:    接收设备云发来的数据, 通过函数GetEdpPacket和EdpPacketType判断出是连接响应后, 
- *          将整个响应EDP包作为参数, 由该函数进行解析
- * 相关函数:PacketConnect1, PacketConnect2, GetEdpPacket, EdpPacketType
- * 参数:    pkg         EDP包, 必须是连接响应包
- * 返回值:  类型 (int32) 
- *          =0          连接成功
- *          >0          连接失败, 具体失败原因见<OneNet接入方案与接口.docx>
- *          <0          解析失败, 具体失败原因见本h文件的错误码
- */
-EDPKIT_DLL
-int32 UnpackConnectResp(EdpPacket* pkg);
+int32 CheckCapacity(Buffer* buf, uint32 len);
 
-/* 
- * 函数名:  PacketPushdata
- * 功能:    打包 设备到设备云的EDP协议包, 设备与设备之间转发数据
- * 说明:    返回的EDP包发送给设备云后, 需要删除这个包
- * 相关函数:UnpackPushdata
- * 参数:    dst_devid   目的设备ID
- *          data        数据
- *          data_len    数据长度
- * 返回值:  类型 (EdpPacket*) 
- *          非空        EDP协议包
- *          为空        EDP协议包生成失败 
- */
-EDPKIT_DLL
-EdpPacket* PacketPushdata(const char* dst_devid,
-                          const char* data, uint32 data_len);
+int32 UnpackCmdReq(EdpPacket* pkg, char** cmdid, uint16* cmdid_len, 
+		   char** req, uint32* req_len);
 
-/* 
- * 函数名:  UnpackPushdata
- * 功能:    解包 由设备云到设备的EDP协议包, 设备与设备之间转发数据
- * 说明:    接收设备云发来的数据, 通过函数GetEdpPacket和EdpPacketType判断出是pushdata后, 
- *          将整个响应EDP包作为参数, 由该函数进行解析 
- *          返回的源设备ID(src_devid)和数据(data)都需要客户端释放
- * 相关函数:PacketPushdata, GetEdpPacket, EdpPacketType
- * 参数:    pkg         EDP包, 必须是pushdata包
- *          src_devid   源设备ID
- *          data        数据
- *          data_len    数据长度
- * 返回值:  类型 (int32) 
- *          =0          解析成功
- *          <0          解析失败, 具体失败原因见本h文件的错误码
- */
-EDPKIT_DLL
-int32 UnpackPushdata(EdpPacket* pkg, char** src_devid,
-                     char** data, uint32* data_len);
-
-/* 
- * 函数名:  PacketSavedataJson
- * 功能:    打包 设备到设备云的EDP协议包, 存储数据(json格式数据)
- * 说明:    返回的EDP包发送给设备云后, 需要删除这个包
- * 相关函数:UnpackSavedata, UnpackSavedataJson
- * 参数:    dst_devid   目的设备ID
- *                      空字符串"" : 目的设备为默认路由设备。
- *                      NULL       ： 无目的设备，不转发。
- *                      其它：     ： 转发给指定设备。
- *          json_obj    json数据
- *          type        json的类型
- *          msg_id      消息标志
- *                      0   ：消息标志位将被置0，包中不携带消息标志。
- *                      其它：消息标志位将被置1，包中携带消息标志。
- * 返回值:  类型 (EdpPacket*) 
- *          非空        EDP协议包
- *          为空        EDP协议包生成失败 
- */
-EdpPacket* PacketSavedataJson(const char* dst_devid, cJSON* json_obj, int type, uint16 msg_id);
-
-/* 
- * 函数名:  PacketSavedataInt
- * 功能:    打包 设备到设备云的EDP协议包, 存储数据(json格式数据)
- * 说明:    该函数适用于数据点为int类型的数据流
- *          它把参数封装成EDP协议规定的cJSON对象,
- *          type类型决定使用哪种JSON格式，具体格式说明见文档《设备终端接入协议2-EDP.docx》
- * 相关函数:UnPacketSavedataInt
- * 参数:    type        采用的JSON数据类型，可选类型为：kTypeFullJson, 
- *                      kTypeSimpleJsonWithoutTime, kTypeSimpleJsonWithTime
- *          dst_devid   目的设备ID。
- *                      空字符串"" : 目的设备为默认路由设备。
- *                      NULL       ： 无目的设备，不转发。
- *                      其它：     ： 转发给指定设备。
- *          ds_id       数据流ID
- *          value       int型数据点
- *          at          如果设置为0，则采用系统当前时间，否则采用给定时间。
- *                      如果type选择为kTypeSimpleJsonWithoutTime，由于这种类型的JSON格式不带时间，
- *                      服务器端统一采用系统时间，此值将被忽略
- *          msg_id      消息标志
- *                      0   ：消息标志位将被置0，包中不携带消息标志。
- *                      其它：消息标志位将被置1，包中携带消息标志。
- * 返回值:  类型 (EdpPacket*) 
- *          非空        EDP协议包
- *          为空        EDP协议包生成失败 
- */
-EDPKIT_DLL
-EdpPacket* PacketSavedataInt(SaveDataType type, const char* dst_devid,
-                             const char* ds_id, int value,
-                             time_t at, uint16 msg_id);
-
-/* 
- * 函数名:  PacketSavedataDouble
- * 功能:    打包 设备到设备云的EDP协议包, 存储数据(json格式数据)
- * 说明:    该函数适用于数据点为double类型的数据流
- *          它把参数封装成EDP协议规定的cJSON对象,
- *          type类型决定使用哪种JSON格式，具体格式说明见文档《设备终端接入协议2-EDP.docx》
- * 相关函数:UnPacketSavedataDouble
- * 参数:    type        采用的JSON数据类型，可选类型为：kTypeFullJson, 
- *                      kTypeSimpleJsonWithoutTime, kTypeSimpleJsonWithTime
- *          dst_devid   目的设备ID。
- *                      空字符串"" : 目的设备为默认路由设备。
- *                      NULL       ： 无目的设备，不转发。
- *                      其它：     ： 转发到指定设备。
- *          ds_id       数据流ID
- *          value       double型数据点
- *          at          如果设置为0，则采用系统当前时间，否则采用给定时间。
- *                      如果type选择为kTypeSimpleJsonWithoutTime，由于这种类型的JSON格式不带时间，
- *                      服务器端统一采用系统时间，此值将被忽略
- *          msg_id      消息标志
- *                      0   ：消息标志位将被置0，包中不携带消息标志。
- *                      其它：消息标志位将被置1，包中携带消息标志。
- * 返回值:  类型 (EdpPacket*) 
- *          非空        EDP协议包
- *          为空        EDP协议包生成失败 
- */
-EDPKIT_DLL
-EdpPacket* PacketSavedataDouble(SaveDataType type, const char* dst_devid,
-                                const char* ds_id, double value,
-                                time_t at, uint16 msg_id);
-
-/* 
- * 函数名:  PacketSavedataString
- * 功能:    打包 设备到设备云的EDP协议包, 存储数据(json格式数据)
- * 说明:    该函数适用于数据点为char*类型的数据流
- *          它把参数封装成EDP协议规定的cJSON对象,
- *          type类型决定使用哪种JSON格式，具体格式说明见文档《设备终端接入协议2-EDP.docx》
- * 相关函数:UnPacketSavedataString
- * 参数:    type        采用的JSON数据类型，可选类型为：kTypeFullJson, 
- *                      kTypeSimpleJsonWithoutTime, kTypeSimpleJsonWithTime
- *          dst_devid   目的设备ID。
- *                      空字符串"" : 目的设备为默认路由设备。
- *                      NULL       ： 无目的设备，不转发。
- *                      其它：     ： 转发到指定设备。
- *          ds_id       数据流ID
- *          value       char*型数据点
- *          at          如果设置为0，则采用系统当前时间，否则采用给定时间。
- *                      如果type选择为kTypeSimpleJsonWithoutTime，由于这种类型的JSON格式不带时间，
- *                      服务器端统一采用系统时间，此值将被忽略
- *          msg_id      消息标志
- *                      0   ：消息标志位将被置0，包中不携带消息标志。
- *                      其它：消息标志位将被置1，包中携带消息标志。
- * 返回值:  类型 (EdpPacket*)
- *          非空        EDP协议包
- *          为空        EDP协议包生成失败 
- */
-EDPKIT_DLL
-EdpPacket* PacketSavedataString(SaveDataType type, const char* dst_devid,
-                                const char* ds_id, const char* value,
-                                time_t at, uint16 msg_id);
-
-/* 
- * 函数名:  UnpackSavedataInt
- * 功能:    解包 由设备云到设备的EDP协议包, 存储数据
- * 说明:    接收设备云发来的数据,将其中的数据流ID及值解析出来。
- *
- * 相关函数:PacketSavedataInt
- *          
- * 参数:    type        采用的JSON数据类型，可选类型为：kTypeFullJson, 
- *                      kTypeSimpleJsonWithoutTime, kTypeSimpleJsonWithTime
- *          pkg         EDP包, 必须是savedata包
- *          ds_id       获取数据流ID，使用完后必须释放
- *          value       数据流对应的值
- * 返回值:  类型 (int32) 
- *          =0          解析成功
- *          <0          解析失败, -1 type类型不合法，其它值见本h文件的错误码
- */
-EDPKIT_DLL
-int32 UnpackSavedataInt(SaveDataType type, EdpPacket* pkg,
-                        char** ds_id, int* value);
-
-/* 
- * 函数名:  UnpackSavedataDouble
- * 功能:    解包 由设备云到设备的EDP协议包, 存储数据
- * 说明:    接收设备云发来的数据,将其中的数据流ID及值解析出来。
- *
- * 相关函数:PacketSavedataDouble
- *          
- * 参数:    type        采用的JSON数据类型，可选类型为：kTypeFullJson, 
- *                      kTypeSimpleJsonWithoutTime, kTypeSimpleJsonWithTime
- *          pkg         EDP包, 必须是savedata包
- *          ds_id       获取数据流ID，使用完后必须释放
- *          value       数据流对应的值
- * 返回值:  类型 (int32) 
- *          =0          解析成功
- *          <0          解析失败, -1 type类型不合法，其它值见本h文件的错误码
- */
-EDPKIT_DLL
-int32 UnpackSavedataDouble(SaveDataType type, EdpPacket* pkg,
-                           char** ds_id, double* value);
-
-/* 
- * 函数名:  UnpackSavedataString
- * 功能:    解包 由设备云到设备的EDP协议包, 存储数据
- * 说明:    接收设备云发来的数据,将其中的数据流ID及值解析出来。
- *
- * 相关函数:PacketSavedataString
- *          
- * 参数:    type        采用的JSON数据类型，可选类型为：kTypeFullJson, 
- *                      kTypeSimpleJsonWithoutTime, kTypeSimpleJsonWithTime
- *          pkg         EDP包, 必须是savedata包
- *          ds_id       获取数据流ID，使用完后需要释放
- *          value       数据流对应的值，使用完后需要释放
- * 返回值:  类型 (int32) 
- *          =0          解析成功
- *          <0          解析失败, -1 type类型不合法，其它值见本h文件的错误码
- */
-EDPKIT_DLL
-int32 UnpackSavedataString(SaveDataType type, EdpPacket* pkg,
-                           char** ds_id, char** value);
-
-
-/* 
- * 函数名:  UnpackSavedataAck
- * 功能:    解包由设备云到设备的EDP协议包, 存贮（转发）消息的响应
- * 说明:    当存贮（转发）消息带有消息确认标志时，平台会响应此包，
- *          用作存储消息的确认。
- * 相关函数:
- * 参数:    pkg         EDP包, 必须是连接响应包
- *          msg_id      响应的消息标志
- *          result      存储命令执行结果
- * 返回值:  类型 (int32) 
- *          =0          解析成功
- *          <0          解析失败, 具体失败原因见本h文件的错误码
- */
-EDPKIT_DLL
-int32 UnpackSavedataAck(EdpPacket* pkg, uint16* msg_id, unsigned char* result);
-
-/* 
- * 函数名:  PacketSavedataSimpleString
- * 功能:    打包 设备到设备云的EDP协议包, 存储数据(以分号分隔的简单字符串形式)
- * 说明:    返回的EDP包发送给设备云后, 需要删除这个包
- * 相关函数:UnpackSavedataSimpleString
- * 参数:    dst_devid   目的设备ID。
- *                      空字符串"" : 目的设备为默认路由设备。
- *                      NULL       ： 无目的设备，不转发。
- *                      其它：     ： 转发到指定设备。
- *          input       以分号分隔的简单字符串形式，
- *                      详见《设备终端接入协议2-EDP.docx》
- *          msg_id      消息标志
- *                      0   ：消息标志位将被置0，包中不携带消息标志。
- *                      其它：消息标志位将被置1，包中携带消息标志。
- * 返回值:  类型 (EdpPacket*) 
- *          非空        EDP协议包
- *          为空        EDP协议包生成失败 
- */
-EDPKIT_DLL
-EdpPacket* PacketSavedataSimpleString(const char* dst_devid, const char* input, uint16 msg_id);
-
-/* 
- * 函数名:  UnpackSavedataSimpleString
- * 功能:    解包 由设备云到设备的EDP协议包, 存储数据
- * 说明:    接收设备云发来的数据, 通过函数GetEdpPacket和EdpPacketType判断出是savedata后,
- *          将整个响应EDP包作为参数, 由该函数进行解析,
- *          获取源端发送来的以分号作为分隔符的字符串。
- * 相关函数: PacketSavedataSimpleString
- *          
- * 参数:    pkg         EDP包, 必须是savedata包
- *          output      存储发送来的字符串
- * 返回值:  类型 (int32) 
- *          =0          解析成功
- *          <0          解析失败, 具体失败原因见本h文件的错误码
- */
-EDPKIT_DLL
-int32 UnpackSavedataSimpleString(EdpPacket* pkg, char** output);
-
-
-/* 
- * 函数名:  PacketSavedataSimpleStringWithTime
- * 功能:    打包 设备到设备云的EDP协议包, 存储数据(带默认时间的以分号分隔的简单字符串形式)
- * 说明:    返回的EDP包发送给设备云后, 需要删除这个包
- * 相关函数:UnpackSavedataSimpleStringWithTime
- * 参数:    
- *          dst_devid   目的设备ID。
- *                          空字符串"" : 目的设备为默认路由设备。
- *                          NULL       ： 无目的设备，不转发。
- *                          其它：     ： 转发到指定设备。
- *          input         以分号分隔的简单字符串形式，( 详见《设备终端接入协议2-EDP.docx》)
- *		at		  包含年月日时分秒的时间结构体；NULL 则使用当前时间
- *          msg_id      消息标志
- *                          0   ：消息标志位将被置0，包中不携带消息标志。
- *                          其它：消息标志位将被置1，包中携带消息标志。
- * 返回值:  类型 (EdpPacket*) 
- *          非空        EDP协议包
- *          为空        EDP协议包生成失败 
- */
-EDPKIT_DLL
-EdpPacket* PacketSavedataSimpleStringWithTime(const char* dst_devid, const char* input,const LPDataTime at, uint16 msg_id);
-
-
-/* 
- * 函数名:  UnpackSavedataSimpleStringWithTime
- * 功能:    解包 由设备云到设备的EDP协议包, 存储数据
- * 说明:    接收设备云发来的数据, 通过函数GetEdpPacket和EdpPacketType判断出是savedata后,
- *          将整个响应EDP包作为参数, 由该函数进行解析,
- *          获取默认时间后，获取源端发送来的以分号作为分隔符的字符串。
- * 相关函数: PacketSavedataSimpleStringWithTime
- *          
- * 参数:    
- *             pkg         EDP包, 必须是savedata包
- *          	  output     存储发送来的字符串
- *	         at		   存储数据包中解析出来的时间结构体
- * 返回值:  类型 (int32) 
- *          =0          解析成功
- *          <0          解析失败, 具体失败原因见本文件的错误码
- */
-EDPKIT_DLL
-int32 UnpackSavedataSimpleStringWithTime(EdpPacket* pkg, char** output, LPDataTime at);
-
-/* 
- * 函数名:  PackSaveDataFloatWithTime
- * 功能:    打包 设备到设备云的EDP协议包, 存储数据(带时间的float数据流,最多1000个， 超过自动截断)
- * 说明:    返回的EDP包发送给设备云后, 需要删除这个包
- * 相关函数:UnpackSaveDataFloatWithTime
- * 参数:    
- *          dst_devid   目的设备ID。
- *                          空字符串"" : 目的设备为默认路由设备。
- *                          NULL       ： 无目的设备，不转发。
- *                          其它：     ： 转发到指定设备。
- *          input         float数据流数据
- *                          高字节在前，低字节在后(即小端)；
- *                          在大端机器上，需将float的四个字节顺序颠倒后再存储
- *                          (详见《设备终端接入协议2-EDP.docx》)
- *          input_count float数据流个数，每次最多1000个，超出自动截断
- *		at		  包含年月日时分秒的时间结构体；NULL 则使用当前时间
- *          msg_id      消息标志
- *                          0   ：消息标志位将被置0，包中不携带消息标志。
- *                          其它：消息标志位将被置1，包中携带消息标志。
- * 返回值:  类型 (EdpPacket*) 
- *          非空        EDP协议包
- *          为空        EDP协议包生成失败 
- */
-EDPKIT_DLL
-EdpPacket* PackSavedataFloatWithTime(const char* dst_devid, const FloatDPS* input, int input_count, const LPDataTime at, uint16 msg_id);
-
-/* 
- * 函数名:  UnpackSaveDataFloatWithTime
- * 功能:    解包 由设备云到设备的EDP协议包, 存储数据
- * 说明:    接收设备云发来的数据, 通过函数GetEdpPacket和EdpPacketType判断出是savedata后,
- *          将整个响应EDP包作为参数, 由该函数进行解析,
- *          获取源端发送来的以分号作为分隔符的字符串。
- * 相关函数: PackSaveDataFloatWithTime
- *          
- * 参数:    pkg         EDP包, 必须是savedata包
- *          	      output     存储发送来的float数据流，内部分配(malloc)，外部使用完后必须释放掉(free)
-  *                             高字节在前，低字节在后(即小端)；
- *                              在大端机器上，需将float的四个字节顺序颠倒后再使用
- *                              (详见《设备终端接入协议2-EDP.docx》)
- *                 output_count float数据流个数，不超过1000
- *		      at		存储数据包中解析出来的时间结构体
- * 返回值:  类型 (int32) 
- *          =0          解析成功
- *          <0          解析失败, 具体失败原因见本文件的错误码
- */
-EDPKIT_DLL
-int32 UnpackSavedataFloatWithTime(EdpPacket* pkg, FloatDPS** output, int* out_cout, LPDataTime at);   
-
-
-/* 
- * 函数名:  PacketSavedataBin
- * 功能:    打包 设备到设备云的EDP协议包, 存储数据(bin格式数据)
- * 说明:    返回的EDP包发送给设备云后, 需要删除这个包
- * 相关函数:UnpackSavedata, UnpackSavedataBin
- * 参数: dst_devid      目的设备ID。
- *                      空字符串"" : 目的设备为默认路由设备。
- *                      NULL       ： 无目的设备，不转发。
- *                      其它：     ： 转发到指定设备。
- *          desc_obj    数据描述 json格式
- *          bin_data    二进制数据
- *          bin_len     二进制数据长度
- *          msg_id      消息标志
- *                      0   ：消息标志位将被置0，包中不携带消息标志。
- *                      其它：消息标志位将被置1，包中携带消息标志。
- * 返回值:  类型 (EdpPacket*) 
- *          非空        EDP协议包
- *          为空        EDP协议包生成失败 
- */
-EdpPacket* PacketSavedataBin(const char* dst_devid, cJSON* desc_obj,
-                             const uint8* bin_data, uint32 bin_len, uint16 msg_id);
-/* 
- * 函数名:  PacketSavedataBinStr
- * 功能:    打包 设备到设备云的EDP协议包, 存储数据(bin格式数据)
- * 说明:    返回的EDP包发送给设备云后, 需要删除这个包
- * 相关函数:UnpackSavedata, UnpackSavedataBin
- * 参数:    dst_devid   目的设备ID。
- *                      空字符串"" : 目的设备为默认路由设备。
- *                      NULL       ： 无目的设备，不转发。
- *                      其它：     ： 转发到指定设备。
- *          desc_obj    数据描述 字符串格式
- *          bin_data    二进制数据
- *          bin_len     二进制数据长度
- *          msg_id      消息标志
- *                      0   ：消息标志位将被置0，包中不携带消息标志。
- *                      其它：消息标志位将被置1，包中携带消息标志。
- * 返回值:  类型 (EdpPacket*) 
- *          非空        EDP协议包
- *          为空        EDP协议包生成失败 
- */
-EDPKIT_DLL
-EdpPacket* PacketSavedataBinStr(const char* dst_devid, const char* desc_str,
-                                const uint8* bin_data, uint32 bin_len, uint16 msg_id);
-
-/* 
- * 函数名:  UnpackSavedata
- * 功能:    解包 由设备云到设备的EDP协议包, 存储数据
- * 说明:    接收设备云发来的数据, 通过函数GetEdpPacket和EdpPacketType判断出是savedata后,
- *          将整个响应EDP包作为参数, 由该函数进行解析 
- *          然后再根据json和bin的标识(jb_flag), 调用相应的解析函数
- *          返回的源设备ID(src_devid)需要客户端释放
- * 相关函数:PacketSavedataJson, PacketSavedataBin, GetEdpPacket, 
- *          UnpackSavedataJson, UnpackSavedataBin
- * 参数:    pkg         EDP包, 必须是savedata包
- *          src_devid   源设备ID
- *          jb_flag     json or bin数据, 1: json, 2: 二进制
- * 返回值:  类型 (int32)
- *          =0          解析成功
- *          <0          解析失败, 具体失败原因见本h文件的错误码
- */
-EDPKIT_DLL
-int32 UnpackSavedata(EdpPacket* pkg, char** src_devid, uint8* jb_flag);
-
-/* 
- * 函数名:  UnpackSavedataJson
- * 功能:    解包 由设备云到设备的EDP协议包, 存储数据(json格式数据)
- * 说明:    返回的json数据(json_obj)需要客户端释放
- * 相关函数:PacketSavedataJson, GetEdpPacket, EdpPacketType, UnpackSavedata
- * 参数:    pkg         EDP包, 必须是savedata包的json数据包
- *          json_obj    json数据 
- * 返回值:  类型 (int32) 
- *          =0          解析成功
- *          <0          解析失败, 具体失败原因见本h文件的错误码
- */
-int32 UnpackSavedataJson(EdpPacket* pkg, cJSON** json_obj);
-
-/* 
- * 函数名:  UnpackSavedataBin
- * 功能:    解包 由设备云到设备的EDP协议包, 存储数据(bin格式数据)
- * 说明:    返回的数据描述(desc_obj)和bin数据(bin_data)需要客户端释放
- * 相关函数:PacketSavedataBin, GetEdpPacket, EdpPacketType, UnpackSavedata
- * 参数:    pkg         EDP包, 必须是savedata包的bin数据包
- *          desc_obj    数据描述 json格式
- *          bin_data    二进制数据
- *          bin_len     二进制数据长度
- * 返回值:  类型 (int32) 
- *          =0          解析成功
- *          <0          解析失败, 具体失败原因见本h文件的错误码
- */
-int32 UnpackSavedataBin(EdpPacket* pkg, cJSON** desc_obj,
-                        uint8** bin_data, uint32* bin_len);
-/* 
- * 函数名:  UnpackSavedataBinStr
- * 功能:    解包 由设备云到设备的EDP协议包, 存储数据(bin格式数据)
- * 说明:    返回的数据描述(desc_obj)和bin数据(bin_data)需要客户端释放
- * 相关函数:PacketSavedataBin, GetEdpPacket, EdpPacketType, UnpackSavedata
- * 参数:    pkg         EDP包, 必须是savedata包的bin数据包
- *          desc_obj    数据描述 string格式
- *          bin_data    二进制数据
- *          bin_len     二进制数据长度
- * 返回值:  类型 (int32) 
- *          =0          解析成功
- *          <0          解析失败, 具体失败原因见本h文件的错误码
- */
-EDPKIT_DLL
-int32 UnpackSavedataBinStr(EdpPacket* pkg, char** desc_str,
-                           uint8** bin_data, uint32* bin_len);
-/* 
- * 函数名:  PacketCmdResp
- * 功能:    向接入机发送命令响应
- * 说明:    返回的EDP包发送给设备云后, 需要客户程序删除该包
- *          
- * 相关函数:UnpackCmdReq
- * 参数:    cmdid       命令id
- *          cmdid_len   命令id长度
- *          resp        响应的消息
- *          resp_len    响应消息长度
- * 返回值:  类型 (EdpPacket*) 
- *          非空        EDP协议包
- *          为空        EDP协议包生成失败 
- */
-EDPKIT_DLL
 EdpPacket* PacketCmdResp(const char* cmdid, uint16 cmdid_len,
-                         const char* resp, uint32 resp_len);
-
-/* 
- * 函数名:  UnpackCmdReq
- * 功能:    解包 由设备云到设备的EDP协议包, 命令请求消息
- * 说明:    接收设备云发来的数据, 解析命令请求消息包
- *          获取的cmdid以及req需要在使用后释放。
- * 相关函数:PacketCmdResp
- * 参数:    pkg         EDP包
- *          cmdid       获取命令id
- *          cmdid_len   cmdid的长度
- *          req         用户命令的起始位置
- *          req_len     用户命令的长度
- * 返回值:  类型 (int32) 
- *          =0          解析成功
- *          <0          解析失败, 具体失败原因见本h文件的错误码
- */
-EDPKIT_DLL
-int32 UnpackCmdReq(EdpPacket* pkg, char** cmdid, uint16* cmdid_len,
-                   char** req, uint32* req_len);
-
-
-EDPKIT_DLL
-EdpPacket* PackUpdateReq(const char* softinfo, int len);
-/* 
- * 函数名:  PacketPing
- * 功能:    打包 由设备到设备云的EDP协议包, 心跳
- * 说明:    返回的EDP包发送给设备云后, 需要客户程序删除该包
- *          设备云会回复心跳响应给设备
- * 相关函数:UnpackPingResp
- * 参数:    无
- * 返回值:  类型 (EdpPacket*) 
- *          非空        EDP协议包
- *          为空        EDP协议包生成失败 
- */
-EDPKIT_DLL
+			 const char* resp, uint32 resp_len);
 EdpPacket* PacketPing(void);
 
-/* 
- * 函数名:  UnpackPingResp
- * 功能:    解包 由设备云到设备的EDP协议包, 心跳响应
- * 说明:    接收设备云发来的数据, 通过函数GetEdpPacket和EdpPacketType判断出是连接响应后, 
- *          将整个响应EDP包作为参数, 由该函数进行解析
- * 相关函数:PacketPing, GetEdpPacket, EdpPacketType
- * 参数:    pkg         EDP包, 必须是连接响应包
- * 返回值:  类型 (int32) 
- *          =0          心跳成功
- *          >0          心跳失败, 具体失败原因见<OneNet接入方案与接口.docx>
- *          <0          解析失败, 具体失败原因见本h文件的错误码
- */
-EDPKIT_DLL
-int32 UnpackPingResp(EdpPacket* pkg);
+uint8 EdpPacketType(EdpPacket* pkg);
+EdpPacket* GetEdpPacket(RecvBuffer* buf);
+int32 IsPkgComplete(RecvBuffer* buf);
 
-typedef struct UpdateInfoList
-{
-    char* name;
-    char* version;
-    char* url;
-    char* md5; /* 32bytes */
-    struct UpdateInfoList* next;
-}UpdateInfoList;
 
-EDPKIT_DLL
-void FreeUpdateInfolist(struct UpdateInfoList* head);
-
-EDPKIT_DLL
-EdpPacket* PackUpdateReq(const char* softinfo, int len);
-
-EDPKIT_DLL
-EdpPacket* PacketUpdateReq(UpdateInfoList* head);
-
-EDPKIT_DLL
-int UnpackUpdateResp(EdpPacket* pkg, UpdateInfoList** head);
-
-#ifdef __cplusplus
-}
-#endif
+int32 UnpackConnectResp(EdpPacket* pkg);
 
 #endif /* __EDP_KIT_H__ */
+

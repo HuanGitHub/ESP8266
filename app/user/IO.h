@@ -16,4 +16,7 @@ void GPIO_13_No();
 
 void GPIO_14_No();
 
+void GPIO_5_No();
+void GPIO_5_Off();
+
 #endif

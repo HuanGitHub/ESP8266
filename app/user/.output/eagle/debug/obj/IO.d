@@ -16,4 +16,5 @@
  ../../include/ip_addr.h ../../include/c_types.h ../../include/queue.h \
  ../include/user_config.h ../../include/spi_flash.h ../../include/gpio.h \
  ../../include/gpio.h ../include/espconn.h ../../include/ip_addr.h \
- ../include/mem.h wifi.h TCP_server.h TCP_client.h
+ ../include/mem.h wifi.h TCP_server.h TCP_client.h OneNet.h EdpKit.h \
+ Common.h cJSON.h

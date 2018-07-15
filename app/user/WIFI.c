@@ -95,7 +95,18 @@ void get_WIFI_state()
 		case STATION_CONNECT_FAIL:	WIFI_connect_Flag = 0;			break;
 		case STATION_GOT_IP:		WIFI_connect_Flag = 1;			break;
 	}
-	
+	if(WIFI_connect_Flag == 1){
+	//	GPIO_14_Off();	
+	//	os_printf("WIFI_connect_Flag == 1 \r\n");
+		GPIO_12_Off();	
+		
+	}else{
+	//	GPIO_14_No();
+	//	os_printf("WIFI_connect_Flag == 0 \r\n");
+		GPIO_12_No();
+		
+		
+	}
 	if(get_WIFI_Set_Flag)
 	{
 		if(!strlen(s_Station_Config.ssid)){

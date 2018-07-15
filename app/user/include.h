@@ -16,6 +16,9 @@
 #include "wifi.h"
 #include "TCP_server.h"
 #include "TCP_client.h"
+#include "OneNet.h"
+#include "EdpKit.h"
+
 void use_Timer(os_timer_t *timer,os_timer_func_t *pfunction,void *parg,int t,char re_falg);
 #endif
 

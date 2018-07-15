@@ -26,7 +26,7 @@ char *http_res = "HTTP/1.1 200 OK\r\nServer:zhanghuan\r\n"
 		<p style=\"display:inline\">PassWorld&nbsp;&nbsp:</p>\r\n\
 		<input type=\"password\" name=\"pass\"value=\"\"/>\r\n\
    	</div>\r\n\
-   	<div style=\" margin-left:350px;margin-top:35px\">\r\n\
+   	<div style=\" margin-left:300px;margin-top:35px\">\r\n\
         <input type=\"submit\" value=\"Commit\" style=\"margin:0 auto; background-color:#666 font-size:16px\"\"/>\r\n\
 	</div>\r\n\
 	</form>\
@@ -35,6 +35,18 @@ char *http_res = "HTTP/1.1 200 OK\r\nServer:zhanghuan\r\n"
 </body>\r\n\
 </html>";
 /*}}}*/
+char *Http_ret = "HTTP/1.1 200 OK\r\nServer:zhanghuan\r\n" 
+"Accept-Ranges:bytes\r\nContent-Length:1024\r\nConnection:close\r\n"/*{{{*/ 
+"Content-Type:text/html\r\n\r\n\
+<!DOCTYPE>\r\n\
+<html>\r\n\
+<head>\r\n\
+<title>Input WIFI Info</title>\r\n\
+<meta charset=unicode\" />\r\n\
+</head>\r\n\
+<body>\r\n\
+</body>\r\n\
+</html>";
 char get_WIFI_Set_Flag;
 WIFI_Set s_WIFI_Info;
 char TCP_Creat_Flag ;
@@ -45,7 +57,12 @@ void espconn_ESP_server_recv_cb(void *arg,char *pdata,unsigned short len)
    		espconn_send(ESP_tcp_ser,http_res,strlen(http_res));
 		os_printf("%s\n",pdata);
 		os_printf("%d\r\n",strlen(http_res));
-		get_WIFI_Set_Flag = get_Post_Par(pdata);		
+		get_WIFI_Set_Flag = get_Post_Par(pdata);
+		if(get_WIFI_Set_Flag == 1){
+			os_printf("Get WiFI SSID AND PASSWORLD\r\n");
+			espconn_send(ESP_tcp_ser,Http_ret,strlen(Http_ret));
+			espconn_send(ESP_tcp_ser,Http_ret,strlen(Http_ret));
+		}
 	//	os_printf("get_WIFI_Set_flag: %d\r\n",get_WIFI_Set_Flag);
 
 	}
@@ -166,7 +183,7 @@ int get_Post_Par(char *buf)
 				return 0;
 		beg += 1;
 		strcpy(s_WIFI_Info.pass,beg);
-		os_printf("end: %s\r\n WIFI_Info.ssid: %s\r\nWIFI_Info.pass %s\r\n",end,s_WIFI_Info.ssid,s_WIFI_Info.pass);
+	//	os_printf("end: %s\r\n WIFI_Info.ssid: %s\r\nWIFI_Info.pass %s\r\n",end,s_WIFI_Info.ssid,s_WIFI_Info.pass);
 		return 1;	
 	}
 }/*}}}*/
